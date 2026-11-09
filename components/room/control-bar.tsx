@@ -6,7 +6,8 @@ import {
   MicOff,
   Video,
   VideoOff,
-  ScreenShare,
+  MonitorUp,
+  MonitorOff,
   Gamepad2,
   MessageSquare,
   PhoneOff,
@@ -21,93 +22,88 @@ export function ControlBar() {
   const { isChatOpen, toggleChat, activeActivity, setActiveActivity } =
     useRoomStore();
 
-  // LiveKit hooks to toggle audio and video
-  const micToggle = useTrackToggle({ source: Track.Source.Microphone });
-  const cameraToggle = useTrackToggle({ source: Track.Source.Camera });
-  const screenToggle = useTrackToggle({ source: Track.Source.ScreenShare });
+  const mic = useTrackToggle({ source: Track.Source.Microphone });
+  const cam = useTrackToggle({ source: Track.Source.Camera });
+  const screen = useTrackToggle({ source: Track.Source.ScreenShare });
 
   return (
-    <footer className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-zinc-900/90 backdrop-blur-md border border-zinc-800 rounded-2xl px-4 py-2.5 flex items-center gap-3 shadow-2xl">
-      {/* Mic Button */}
-      <button
-        onClick={() => micToggle.toggle()}
-        className={`p-3 rounded-xl transition-all ${
-          micToggle.enabled
-            ? "bg-zinc-800 hover:bg-zinc-700 text-white"
-            : "bg-red-500/20 text-red-400 hover:bg-red-500/30"
-        }`}
-        title={micToggle.enabled ? "Mute Microphone" : "Unmute Microphone"}
-      >
-        {micToggle.enabled ? <Mic size={20} /> : <MicOff size={20} />}
-      </button>
+    <footer className="pointer-events-none fixed inset-x-0 bottom-4 z-40 flex justify-center px-3 sm:bottom-6">
+      <div className="pointer-events-auto flex items-center gap-1.5 rounded-2xl border border-purple-500/25 bg-[#1f003a]/90 p-2 shadow-2xl shadow-purple-950/60 backdrop-blur-md sm:gap-2 sm:px-3">
+        <button
+          onClick={() => mic.toggle()}
+          className={`rounded-xl p-2.5 transition sm:p-3 ${
+            mic.enabled
+              ? "bg-[#2d0554] text-white hover:bg-[#380a66]"
+              : "bg-red-500/20 text-red-300 hover:bg-red-500/30"
+          }`}
+          title={mic.enabled ? "Mute microphone" : "Unmute microphone"}
+        >
+          {mic.enabled ? <Mic size={19} /> : <MicOff size={19} />}
+        </button>
 
-      {/* Camera Button */}
-      <button
-        onClick={() => cameraToggle.toggle()}
-        className={`p-3 rounded-xl transition-all ${
-          cameraToggle.enabled
-            ? "bg-zinc-800 hover:bg-zinc-700 text-white"
-            : "bg-red-500/20 text-red-400 hover:bg-red-500/30"
-        }`}
-        title={cameraToggle.enabled ? "Turn Off Camera" : "Turn On Camera"}
-      >
-        {cameraToggle.enabled ? <Video size={20} /> : <VideoOff size={20} />}
-      </button>
+        <button
+          onClick={() => cam.toggle()}
+          className={`rounded-xl p-2.5 transition sm:p-3 ${
+            cam.enabled
+              ? "bg-[#2d0554] text-white hover:bg-[#380a66]"
+              : "bg-red-500/20 text-red-300 hover:bg-red-500/30"
+          }`}
+          title={cam.enabled ? "Turn off camera" : "Turn on camera"}
+        >
+          {cam.enabled ? <Video size={19} /> : <VideoOff size={19} />}
+        </button>
 
-      {/* Screen Share Button */}
-      <button
-        onClick={() => screenToggle.toggle()}
-        className={`p-3 rounded-xl transition-all ${
-          screenToggle.enabled
-            ? "bg-blue-600 text-white"
-            : "bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
-        }`}
-        title="Share Screen"
-      >
-        <ScreenShare size={20} />
-      </button>
+        <button
+          onClick={() => screen.toggle()}
+          className={`rounded-xl p-2.5 transition sm:p-3 ${
+            screen.enabled
+              ? "bg-blue-600 text-white"
+              : "bg-[#2d0554] text-purple-100 hover:bg-[#380a66]"
+          }`}
+          title={screen.enabled ? "Stop sharing" : "Share screen"}
+        >
+          {screen.enabled ? <MonitorOff size={19} /> : <MonitorUp size={19} />}
+        </button>
 
-      <div className="w-[1px] h-6 bg-zinc-800 mx-1" />
+        <div className="mx-0.5 h-6 w-px bg-purple-500/25" />
 
-      {/* Games / Activities Selector */}
-      <button
-        onClick={() =>
-          setActiveActivity(activeActivity === "youtube" ? "grid" : "youtube")
-        }
-        className={`p-3 rounded-xl transition-all flex items-center gap-2 ${
-          activeActivity === "youtube"
-            ? "bg-amber-500 text-black font-semibold"
-            : "bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
-        }`}
-        title="Watch Party / Mini Games"
-      >
-        <Gamepad2 size={20} />
-        <span className="text-xs hidden sm:inline">Activities</span>
-      </button>
+        <button
+          onClick={() =>
+            setActiveActivity(activeActivity === "youtube" ? "grid" : "youtube")
+          }
+          className={`flex items-center gap-1.5 rounded-xl px-2.5 py-2.5 text-xs font-semibold transition sm:px-3 ${
+            activeActivity === "youtube"
+              ? "bg-[#ffe600] text-black"
+              : "bg-[#2d0554] text-purple-100 hover:bg-[#380a66]"
+          }`}
+          title="Toggle watch party"
+        >
+          <Gamepad2 size={18} />
+          <span className="hidden sm:inline">Watch</span>
+        </button>
 
-      {/* Chat Sidebar Toggle */}
-      <button
-        onClick={toggleChat}
-        className={`p-3 rounded-xl transition-all relative ${
-          isChatOpen
-            ? "bg-zinc-700 text-white"
-            : "bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
-        }`}
-        title="Toggle Chat"
-      >
-        <MessageSquare size={20} />
-      </button>
+        <button
+          onClick={toggleChat}
+          className={`rounded-xl p-2.5 transition sm:p-3 ${
+            isChatOpen
+              ? "bg-[#2d0554] text-white"
+              : "bg-[#2d0554]/60 text-purple-200 hover:bg-[#380a66]"
+          }`}
+          title="Toggle chat"
+        >
+          <MessageSquare size={19} />
+        </button>
 
-      <div className="w-[1px] h-6 bg-zinc-800 mx-1" />
+        <div className="mx-0.5 h-6 w-px bg-purple-500/25" />
 
-      {/* Leave Room Button */}
-      <button
-        onClick={() => router.push("/")}
-        className="p-3 rounded-xl bg-red-600 hover:bg-red-700 text-white transition-all"
-        title="Leave Room"
-      >
-        <PhoneOff size={20} />
-      </button>
+        <button
+          onClick={() => router.push("/lobby")}
+          className="rounded-xl bg-red-600 p-2.5 text-white transition hover:bg-red-500 sm:p-3"
+          title="Leave room"
+        >
+          <PhoneOff size={19} />
+        </button>
+      </div>
     </footer>
   );
 }

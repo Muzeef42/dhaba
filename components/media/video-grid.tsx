@@ -4,68 +4,102 @@ import React from "react";
 import {
   useTracks,
   VideoTrack,
-  AudioTrack,
   useParticipantInfo,
+  useIsSpeaking,
+  isTrackReference,
+  useMaybeRoomContext,
 } from "@livekit/components-react";
+import type { TrackReferenceOrPlaceholder } from "@livekit/components-react";
 import { Track } from "livekit-client";
-import { User, MicOff } from "lucide-react";
+import { MicOff, User } from "lucide-react";
+
+function Placeholder({ message }: { message: string }) {
+  return (
+    <div className="flex h-full w-full items-center justify-center p-4 text-center text-sm text-purple-200/70">
+      {message}
+    </div>
+  );
+}
 
 export function VideoGrid() {
-  // Listen to all camera and screen-share tracks from everyone in the room
-  const tracks = useTracks([
-    { source: Track.Source.Camera, withPlaceholder: true },
-    { source: Track.Source.ScreenShare, withPlaceholder: false },
-  ]);
+  const room = useMaybeRoomContext();
+  if (!room) {
+    return <Placeholder message="Camera/video tiles appear when LiveKit is connected." />;
+  }
+  return <LiveVideoGrid />;
+}
+
+function LiveVideoGrid() {
+  const tracks = useTracks(
+    [
+      { source: Track.Source.Camera, withPlaceholder: true },
+      { source: Track.Source.ScreenShare, withPlaceholder: false },
+    ],
+    { onlySubscribed: false }
+  );
+
+  if (!tracks.length) {
+    return <Placeholder message="Waiting for participants…" />;
+  }
+
+  const count = tracks.length;
+  const cols =
+    count <= 1
+      ? "grid-cols-1"
+      : count <= 2
+        ? "grid-cols-1 sm:grid-cols-2"
+        : count <= 4
+          ? "grid-cols-2"
+          : "grid-cols-2 md:grid-cols-3";
 
   return (
-    <div className="flex-1 w-full h-full p-4 overflow-hidden flex items-center justify-center">
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full h-full max-h-[85vh]">
+    <div className="h-full w-full overflow-auto p-2 sm:p-3">
+      <div className={`grid ${cols} auto-rows-fr gap-2 sm:gap-3`}>
         {tracks.map((trackRef) => (
-          <ParticipantTile key={trackRef.participant.identity} trackRef={trackRef} />
+          <Tile
+            key={`${trackRef.participant.identity}-${trackRef.source}-${trackRef.publication?.trackSid ?? "ph"}`}
+            trackRef={trackRef}
+          />
         ))}
       </div>
     </div>
   );
 }
 
-function ParticipantTile({ trackRef }: { trackRef: any }) {
-  const { identity, name, isSpeaking } = useParticipantInfo({
-    participant: trackRef.participant,
-  });
-
-  const isVideoOff = !trackRef.publication?.isSubscribed && !trackRef.publication?.track;
+function Tile({ trackRef }: { trackRef: TrackReferenceOrPlaceholder }) {
+  const participant = trackRef.participant;
+  const { identity, name } = useParticipantInfo({ participant });
+  const speaking = useIsSpeaking(participant);
+  const active = isTrackReference(trackRef) && !trackRef.publication.isMuted;
+  const display = name || identity || "Guest";
 
   return (
     <div
-      className={`relative w-full h-full bg-zinc-900 border rounded-2xl overflow-hidden flex items-center justify-center shadow-lg transition-all ${
-        isSpeaking ? "border-green-500 ring-2 ring-green-500/20" : "border-zinc-800"
+      className={`relative min-h-[140px] overflow-hidden rounded-2xl border bg-[#120024] shadow-lg transition sm:min-h-[160px] ${
+        speaking
+          ? "border-emerald-400/70 ring-2 ring-emerald-400/20"
+          : "border-purple-700/30"
       }`}
     >
-      {/* Video stream */}
-      {trackRef.publication?.track ? (
-        <VideoTrack trackRef={trackRef} className="w-full h-full object-cover" />
+      {active ? (
+        <VideoTrack
+          trackRef={trackRef}
+          className="h-full w-full object-cover"
+        />
       ) : (
-        /* Fallback avatar if camera is off */
-        <div className="flex flex-col items-center justify-center gap-2">
-          <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400">
-            <User size={32} />
+        <div className="flex h-full min-h-[140px] flex-col items-center justify-center gap-2 bg-gradient-to-b from-[#2a074e] to-[#18002e] sm:min-h-[160px]">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#5b32a8] text-white shadow-inner">
+            <User size={26} />
           </div>
-          <span className="text-zinc-400 text-sm font-medium">
-            {name || identity}
+          <span className="max-w-[90%] truncate text-xs font-medium text-purple-100">
+            {display}
           </span>
         </div>
       )}
-
-      {/* Participant Audio */}
-      {trackRef.source === Track.Source.Camera && (
-        <AudioTrack trackRef={trackRef} />
-      )}
-
-      {/* Name tag overlay */}
-      <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg flex items-center gap-2 text-xs text-white">
-        <span>{name || identity}</span>
-        {trackRef.participant.isMuted && (
-          <MicOff size={12} className="text-red-400" />
+      <div className="absolute bottom-2 left-2 flex max-w-[calc(100%-1rem)] items-center gap-1.5 rounded-lg bg-black/55 px-2 py-1 text-[11px] text-white backdrop-blur-md">
+        <span className="truncate">{display}</span>
+        {participant.isMicrophoneEnabled === false && (
+          <MicOff size={12} className="shrink-0 text-red-300" />
         )}
       </div>
     </div>

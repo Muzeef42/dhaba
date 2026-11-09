@@ -20,7 +20,20 @@ export async function GET(req: NextRequest) {
 
   if (!apiKey || !apiSecret || !wsUrl) {
     return NextResponse.json(
-      { error: "LiveKit server credentials missing" },
+      {
+        error:
+          "LiveKit is not configured. Add valid LIVEKIT_API_KEY, LIVEKIT_API_SECRET, and NEXT_PUBLIC_LIVEKIT_URL (wss://...) from your LiveKit project to .env.local, then restart the dev server.",
+      },
+      { status: 500 }
+    );
+  }
+
+  if (apiKey === "devkey" || apiSecret === "secret") {
+    return NextResponse.json(
+      {
+        error:
+          "Placeholder LiveKit credentials detected. Replace LIVEKIT_API_KEY/LIVEKIT_API_SECRET with real keys from your LiveKit Cloud/self-hosted project (and set NEXT_PUBLIC_LIVEKIT_URL to that project's wss URL).",
+      },
       { status: 500 }
     );
   }
